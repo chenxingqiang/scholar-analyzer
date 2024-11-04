@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Scholar research analysis and visualization dashboard">
+    <title>Scholar Research Analysis</title>
+    
+    <!-- Vendor CSS -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/datatables/1.10.21/css/jquery.dataTables.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.13/css/select2.min.css">
+    
+    <!-- Application CSS -->
+    <link rel="stylesheet" href="/static/css/base.css">
+    <link rel="stylesheet" href="/static/css/components.css">
+    <link rel="stylesheet" href="/static/css/layouts.css">
+    <link rel="stylesheet" href="/static/css/themes/light.css">
+</head>
+<body data-layout="grid">
+    <header class="app-header">
+        <div class="container">
+            <div class="header-content">
+                <h1>Scholar Research Analysis</h1>
+                <div class="header-actions">
+                    <div class="search-container">
+                        <input type="text" id="searchInput" placeholder="Search papers..." class="search-input">
+                        <button class="search-btn" aria-label="Search">
+                            <span class="icon">🔍</span>
+                        </button>
+                    </div>
+                    <div class="action-buttons">
+                        <button id="themeToggle" class="btn-icon" aria-label="Toggle theme">
+                            <span class="icon">☀️</span>
+                        </button>
+                        <button id="layoutToggle" class="btn-icon" aria-label="Toggle layout">
+                            <span class="icon">⊞</span>
+                        </button>
+                        <div class="export-dropdown">
+                            <button class="btn-primary">
+                                Export
+                                <span class="icon">▾</span>
+                            </button>
+                            <div class="dropdown-menu">
+                                <button data-export="csv">CSV</button>
+                                <button data-export="bibtex">BibTeX</button>
+                                <button data-export="json">JSON</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <main class="container">
+        <!-- Query Information -->
+        <section class="query-info card" aria-label="Query Information">
+            <div class="card-header">
+                <h2>Query Information</h2>
+                <time id="queryTimestamp" class="timestamp"></time>
+            </div>
+            <div class="card-content">
+                <div class="info-grid">
+                    <div class="info-item">
+                        <label>Query Terms:</label>
+                        <span id="queryTerms"></span>
+                    </div>
+                    <div class="info-item">
+                        <label>Date Range:</label>
+                        <span id="dateRange"></span>
+                    </div>
+                    <div class="info-item">
+                        <label>Filters Applied:</label>
+                        <div id="appliedFilters" class="filter-tags"></div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Key Metrics -->
+        <section class="metrics-overview" aria-label="Research Metrics">
+            <div class="metrics-grid">
+                <article class="metric-card" data-metric="papers">
+                    <div class="metric-content">
+                        <h3>Total Papers</h3>
+                        <div class="metric-value" id="totalPapers">-</div>
+                        <div class="metric-trend" id="papersTrend"></div>
+                    </div>
+                    <div class="metric-footer">
+                        <button class="btn-link" data-tooltip="View details">
+                            <span class="icon">ℹ️</span>
+                        </button>
+                    </div>
+                </article>
+
+                <article class="metric-card" data-metric="citations">
+                    <div class="metric-content">
+                        <h3>Impact Metrics</h3>
+                        <div class="metric-group">
+                            <div class="metric-item">
+                                <label>Citations</label>
+                                <span id="totalCitations">-</span>
+                            </div>
+                            <div class="metric-item">
+                                <label>h-index</label>
+                                <span id="hIndex">-</span>
+                            </div>
+                        </div>
+                        <div class="metric-trend" id="citationsTrend"></div>
+                    </div>
+                    <div class="metric-footer">
+                        <button class="btn-link" data-tooltip="View details">
+                            <span class="icon">ℹ️</span>
+                        </button>
+                    </div>
+                </article>
+
+                <article class="metric-card" data-metric="venues">
+                    <div class="metric-content">
+                        <h3>Publication Venues</h3>
+                        <div class="metric-group">
+                            <div class="metric-item">
+                                <label>Total Venues</label>
+                                <span id="totalVenues">-</span>
+                            </div>
+                            <div class="metric-item">
+                                <label>Top Venue</label>
+                                <span id="topVenue">-</span>
+                            </div>
+                        </div>
+                        <div class="metric-trend" id="venuesTrend"></div>
+                    </div>
+                    <div class="metric-footer">
+                        <button class="btn-link" data-tooltip="View details">
+                            <span class="icon">ℹ️</span>
+                        </button>
+                    </div>
+                </article>
+
+                <article class="metric-card" data-metric="collaboration">
+                    <div class="metric-content">
+                        <h3>Collaboration</h3>
+                        <div class="metric-group">
+                            <div class="metric-item">
+                                <label>Authors</label>
+                                <span id="totalAuthors">-</span>
+                            </div>
+                            <div class="metric-item">
+                                <label>Avg. Team Size</label>
+                                <span id="avgTeamSize">-</span>
+                            </div>
+                        </div>
+                        <div class="metric-trend" id="collaborationTrend"></div>
+                    </div>
+                    <div class="metric-footer">
+                        <button class="btn-link" data-tooltip="View details">
+                            <span class="icon">ℹ️</span>
+                        </button>
+                    </div>
+                </article>
+            </div>
+        </section>
+
+        <!-- Main Content Tabs -->
+        <div class="content-wrapper">
+            <!-- Advanced Filters -->
+            <aside class="filters-panel card" aria-label="Advanced Filters">
+                <div class="card-header">
+                    <h2>Filters</h2>
+                    <button id="clearFilters" class="btn-text">Clear All</button>
+                </div>
+                <div class="card-content">
+                    <form id="filterForm" class="filter-form">
+                        <div class="filter-group">
+                            <label>Year Range</label>
+                            <div class="range-inputs">
+                                <input type="number" id="yearStart" placeholder="From">
+                                <input type="number" id="yearEnd" placeholder="To">
+                            </div>
+                        </div>
+
+                        <div class="filter-group">
+                            <label>Citations</label>
+                            <div class="range-inputs">
+                                <input type="number" id="citationMin" placeholder="Min">
+                                <input type="number" id="citationMax" placeholder="Max">
+                            </div>
+                        </div>
+
+                        <div class="filter-group">
+                            <label>Authors</label>
+                            <input type="text" id="authorFilter" placeholder="Search authors">
+                            <div id="authorSuggestions" class="suggestions-container"></div>
+                        </div>
+
+                        <div class="filter-group">
+                            <label>Venues</label>
+                            <select id="venueFilter" multiple>
+                                <option value="">Loading venues...</option>
+                            </select>
+                        </div>
+
+                        <div class="filter-group">
+                            <label>Topics</label>
+                            <div class="topic-tags" id="topicTags"></div>
+                        </div>
+                    </form>
+                </div>
+            </aside>
+
+            <!-- Main Content Area -->
+            <div class="main-content">
+                <nav class="tab-navigation" role="tablist">
+                    <button class="tab-button active" role="tab" aria-selected="true" data-tab="trends">
+                        Publication Trends
+                    </button>
+                    <button class="tab-button" role="tab" aria-selected="false" data-tab="papers">
+                        Paper List
+                    </button>
+                    <button class="tab-button" role="tab" aria-selected="false" data-tab="insights">
+                        Research Insights
+                    </button>
+                    <button class="tab-button" role="tab" aria-selected="false" data-tab="network">
+                        Collaboration Network
+                    </button>
+                </nav>
+
+                <div class="tab-content">
+                    <!-- Trends Tab -->
+                    <section id="trends" class="tab-panel active" role="tabpanel">
+                        <div class="chart-grid">
+                            <div class="chart-card">
+                                <div class="card-header">
+                                    <h3>Publications Over Time</h3>
+                                    <div class="chart-controls">
+                                        <button class="btn-icon" data-chart-action="download">
+                                            <span class="icon">⬇️</span>
+                                        </button>
+                                        <button class="btn-icon" data-chart-action="fullscreen">
+                                            <span class="icon">⛶</span>
+                                        </button>
+                                    </div>
+                                </div>
+                                <div class="chart-container" id="yearlyTrendChart"></div>
+                            </div>
+
+                            <div class="chart-card">
+                                <div class="card-header">
+                                    <h3>Citation Impact</h3>
+                                    <div class="chart-controls">
+                                        <button class="btn-icon" data-chart-action="download">
+                                            <span class="icon">⬇️</span>
+                                        </button>
+                                        <button class="btn-icon" data-chart-action="fullscreen">
+                                            <span class="icon">⛶</span>
+                                        </button>
+                                    </div>
+                                </div>
+                                <div class="chart-container" id="citationDistChart"></div>
+                            </div>
+
+                            <div class="chart-card">
+                                <div class="card-header">
+                                    <h3>Top Publication Venues</h3>
+                                    <div class="chart-controls">
+                                        <button class="btn-icon" data-chart-action="download">
+                                            <span class="icon">⬇️</span>
+                                        </button>
+                                        <button class="btn-icon" data-chart-action="fullscreen">
+                                            <span class="icon">⛶</span>
+                                        </button>
+                                    </div>
+                                </div>
+                                <div class="chart-container" id="venueDistChart"></div>
+                            </div>
+                        </div>
+                    </section>
+
+                    <!-- Papers Tab -->
+                    <section id="papers" class="tab-panel" role="tabpanel">
+                        <div class="table-toolbar">
+                            <div class="table-actions">
+                                <button class="btn-secondary" data-action="columns">
+                                    <span class="icon">☰</span>
+                                    Columns
+                                </button>
+                                <button class="btn-secondary" data-action="export">
+                                    <span class="icon">⬇️</span>
+                                    Export
+                                </button>
+                            </div>
+                            <div class="table-search">
+                                <input type="text" placeholder="Filter papers..." aria-label="Filter papers">
+                            </div>
+                        </div>
+                        <div class="table-container">
+                            <table id="papersTable" class="data-table">
+                                <thead>
+                                    <tr>
+                                        <th>Title</th>
+                                        <th>Authors</th>
+                                        <th>Year</th>
+                                        <th>Venue</th>
+                                        <th>Citations</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody></tbody>
+                            </table>
+                        </div>
+                    </section>
+
+                    <!-- Insights Tab -->
+                    <section id="insights" class="tab-panel" role="tabpanel">
+                        <div class="insights-grid">
+                            <div id="authorInsights" class="insight-card">
+                                <h3>Author Analysis</h3>
+                                <div class="insight-content"></div>
+                            </div>
+                            <div id="topicInsights" class="insight-card">
+                                <h3>Research Topics</h3>
+                                <div class="insight-content"></div>
+                            </div>
+                            <div id="impactInsights" class="insight-card">
+                                <h3>Research Impact</h3>
+                                <div class="insight-content"></div>
+                            </div>
+                            <div id="trendInsights" class="insight-card">
+                                <h3>Emerging Trends</h3>
+                                <div class="insight-content"></div>
+                            </div>
+                        </div>
+                    </section>
+
+                    <!-- Network Tab -->
+                    <section id="network" class="tab-panel" role="tabpanel">
+                        <div class="network-controls">
+                            <div class="control-group">
+                                <label>Layout</label>
+                                <select id="networkLayout">
+                                    <option value="force">Force-Directed</option>
+                                    <option value="circular">Circular</option>
+                                    <option value="hierarchical">Hierarchical</option>
+                                </select>
+                            </div>
+                            <div class="control-group">
+                                <label>Group By</label>
+                                <select id="networkGrouping">
+                                    <option value="none">None</option>
+                                    <option value="venue">Venue</option>
+                                    <option value="year">Year</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="network-container">
+                            <div id="collaborationNetwork" class="network-canvas"></div>
+                            <div id="networkDetails" class="network-details">
+                                <div class="details-content"></div>
+                            </div>
+                        </div>
+                    </section>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <footer class="app-footer">
+        <div class="container">
+            <div class="footer-content">
+                <p>Generated by Scholar Analyzer</p>
+                <p id="generationTimestamp"></p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Loading Overlay -->

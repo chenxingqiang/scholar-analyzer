@@ -1,0 +1,91 @@
+/* dark.css - Dark theme overrides */
+[data-theme="dark"] {
+    /* Color System */
+    --color-background: #1a1a1a;
+    --color-surface: #2d2d2d;
+    --color-text: #e0e0e0;
+    --color-text-secondary: #a0a0a0;
+    
+    /* Primary colors with adjusted contrast */
+    --color-primary: #7aa7f8;
+    --color-primary-light: #9dc0fa;
+    --color-primary-dark: #4285f4;
+    
+    /* Secondary colors with adjusted contrast */
+    --color-secondary: #5dc27d;
+    --color-secondary-light: #7ed49a;
+    --color-secondary-dark: #34a853;
+    
+    /* Shadows with adjusted opacity */
+    --shadow-sm: 0 1px 3px rgba(0,0,0,0.3);
+    --shadow-md: 0 4px 6px rgba(0,0,0,0.4);
+    --shadow-lg: 0 10px 15px rgba(0,0,0,0.4);
+}
+
+/* Card adjustments for dark theme */
+[data-theme="dark"] .card {
+    background: var(--color-surface);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* Table adjustments */
+[data-theme="dark"] .data-table thead th {
+    background: var(--color-primary-dark);
+}
+
+[data-theme="dark"] .data-table tbody tr:nth-child(even) {
+    background: rgba(255, 255, 255, 0.05);
+}
+
+[data-theme="dark"] .data-table tbody tr:hover {
+    background: rgba(122, 167, 248, 0.1);
+}
+
+/* Chart theme adjustments */
+[data-theme="dark"] .chart-container {
+    background: var(--color-surface);
+}
+
+/* Input and form adjustments */
+[data-theme="dark"] input,
+[data-theme="dark"] select {
+    background: var(--color-surface);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    color: var(--color-text);
+}
+
+/* Scrollbar styling */
+[data-theme="dark"] ::-webkit-scrollbar {
+    width: 12px;
+    height: 12px;
+}
+
+[data-theme="dark"] ::-webkit-scrollbar-track {
+    background: var(--color-background);
+}
+
+[data-theme="dark"] ::-webkit-scrollbar-thumb {
+    background: var(--color-primary-dark);
+    border-radius: 6px;
+    border: 3px solid var(--color-background);
+}
+
+/* DataTables specific adjustments */
+[data-theme="dark"] .dataTables_wrapper .dataTables_length,
+[data-theme="dark"] .dataTables_wrapper .dataTables_filter,
+[data-theme="dark"] .dataTables_wrapper .dataTables_info,
+[data-theme="dark"] .dataTables_wrapper .dataTables_processing,
+[data-theme="dark"] .dataTables_wrapper .dataTables_paginate {
+    color: var(--color-text);
+}
+
+[data-theme="dark"] .dataTables_wrapper .dataTables_paginate .paginate_button {
+    color: var(--color-text) !important;
+}
+
+[data-theme="dark"] .dataTables_wrapper .dataTables_paginate .paginate_button.current,
+[data-theme="dark"] .dataTables_wrapper .dataTables_paginate .paginate_button.current:hover {
+    background: var(--color-primary);
+    color: white !important;
+    border: 1px solid var(--color-primary-dark);
+}
