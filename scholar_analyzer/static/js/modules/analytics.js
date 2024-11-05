@@ -132,7 +132,7 @@ class ScholarAnalytics {
         // Implementation for CSV export
     }
 
-    exportToBibTeX() {
+    exportToBIBTEX() {
         // Implementation for BibTeX export
     }
 }

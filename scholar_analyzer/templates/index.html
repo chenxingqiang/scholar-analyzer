@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Scholar Analyzer</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/base.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/components.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/layouts.css') }}">
+    <link id="theme-stylesheet" rel="stylesheet" href="{{ url_for('static', filename='themes/light.css') }}">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Scholar Analyzer</h1>
+            <button id="themeToggle" class="theme-toggle" type="button">Toggle Theme</button>
+        </header>
+
+        <nav class="main-nav">
+            <ul class="tabs">
+                <li data-tab="metrics" class="tab">Metrics</li>
+                <li data-tab="charts" class="tab">Charts</li>
+                <li data-tab="papers" class="tab">Papers</li>
+                <li data-tab="insights" class="tab">Insights</li>
+            </ul>
+        </nav>
+
+        <main class="content">
+            <section id="metrics" class="tab-content">
+                <h2>Metrics</h2>
+                <div class="metrics-grid">
+                    <!-- Metrics will be dynamically inserted here -->
+                </div>
+            </section>
+
+            <section id="charts" class="tab-content">
+                <h2>Charts</h2>
+                <div class="chart-container">
+                    <!-- Charts will be dynamically inserted here -->
+                </div>
+            </section>
+
+            <section id="papers" class="tab-content">
+                <h2>Papers</h2>
+                <div class="filter-section">
+                    <input type="number" id="yearStart" placeholder="Start Year" class="filter-input">
+                    <input type="number" id="citationMin" placeholder="Min Citations" class="filter-input">
+                    <select id="venueFilter" class="filter-select">
+                        <option value="">All Venues</option>
+                    </select>
+                    <button id="applyFilters" class="filter-button" type="button">Apply Filters</button>
+                </div>
+                <div class="papers-list">
+                    <!-- Papers will be dynamically inserted here -->
+                </div>
+            </section>
+
+            <section id="insights" class="tab-content">
+                <h2>Insights</h2>
+                <div class="insights-container">
+                    <!-- Insights will be dynamically inserted here -->
+                </div>
+            </section>
+        </main>
+
+        <footer>
+            <div class="export-buttons">
+                <button type="button" data-export="csv" class="export-button">Export CSV</button>
+                <button type="button" data-export="json" class="export-button">Export JSON</button>
+                <button type="button" data-export="bibtex" class="export-button">Export BibTeX</button>
+            </div>
+        </footer>
+    </div>
+
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+</body>
+</html>
+

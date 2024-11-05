@@ -1,307 +1,167 @@
-// main.js - Application entry point
-import ScholarAnalytics from './modules/analytics.js';
-import chartConfig from './config/charts.js';
-import { initializeUI, updateUI } from './modules/ui.js';
+// scholar_analyzer/static/js/main.js
 
-class ScholarApp {
-    constructor() {
-        this.analytics = null
-        this.charts = []
-        this.state = {
-            isLoading: true,
-            activeTab: 'trends',
-            theme: 'light'
-        }
-    }
+// Tab Management
+function initTabs() {
+    const tabs = document.querySelectorAll('[data-tab]')
+    const contents = document.querySelectorAll('.tab-content')
 
-    async initialize() {
-        try {
-            // Show loading state
-            this.toggleLoading(true)
+    tabs.forEach((tab) => {
+        tab.addEventListener('click', () => {
+            const targetId = tab.getAttribute('data-tab')
 
-            // Load data
-            const response = await fetch('/data/analysis.json')
-            const data = await response.json()
+            // Update active states
+            tabs.forEach((t) => t.classList.remove('active'))
+            contents.forEach((c) => c.classList.remove('active'))
 
-            // Initialize analytics
-            this.analytics = new ScholarAnalytics(data)
-            await this.analytics.initialize()
-
-            // Initialize UI
-            initializeUI()
-            this.setupEventListeners()
-
-            // Initialize charts
-            this.initializeCharts()
-
-            // Update UI with data
-            this.updateDisplay()
-
-            // Hide loading state
-            this.toggleLoading(false)
-        } catch (error) {
-            console.error('Failed to initialize application:', error)
-            this.handleError(error)
-        }
-    }
-
-    initializeCharts() {
-        // Initialize each chart
-        const yearlyTrendChart = chartConfig.yearTrendChart.createChart(
-            document.getElementById('yearlyTrendChart'),
-            this.analytics.processedData.years
-        )
-
-        const citationChart = chartConfig.citationChart.createChart(
-            document.getElementById('citationDistChart'),
-            this.analytics.processedData.citations.distribution
-        )
-
-        const venueChart = chartConfig.venueChart.createChart(
-            document.getElementById('venueDistChart'),
-            this.analytics.processedData.venues
-        )
-
-        this.charts = [yearlyTrendChart, citationChart, venueChart]
-
-        // Setup resize handlers
-        chartConfig.utils.handleResize(this.charts)
-    }
-
-    setupEventListeners() {
-        // Tab switching
-        document.querySelectorAll('.tab-button').forEach((button) => {
-            button.addEventListener('click', (e) => {
-                this.switchTab(e.target.dataset.tab)
-            })
+            tab.classList.add('active')
+            document.getElementById(targetId).classList.add('active')
         })
+    })
 
-        // Theme toggling
-        document.getElementById('themeToggle').addEventListener('click', () => {
-            this.toggleTheme()
-        })
-
-        // Export functionality
-        document.getElementById('exportData').addEventListener('click', () => {
-            this.exportData()
-        })
-
-        // Table interactions
-        const papersTable = document.getElementById('papersTable')
-        if (papersTable) {
-            this.initializeDataTable(papersTable)
-        }
-
-        // Window resize handler
-        window.addEventListener('resize', this.handleResize.bind(this))
-    }
-
-    updateDisplay() {
-        // Update metrics
-        const metrics = this.analytics.metrics
-        document.getElementById('totalPapers').textContent = metrics.totalPapers.toLocaleString()
-        document.getElementById('avgCitations').textContent = metrics.averageCitations.toFixed(1)
-        document.getElementById('totalVenues').textContent = Object.keys(metrics.uniqueVenues).length
-        document.getElementById('yearRange').textContent = `${metrics.yearRange.start} - ${metrics.yearRange.end}`
-
-        // Update query information
-        const queryParams = new URLSearchParams(window.location.search)
-        document.getElementById('queryTerms').textContent = queryParams.get('query') || 'Not specified'
-        document.getElementById('queryTimestamp').textContent = new Date().toLocaleString()
-
-        // Update insights
-        this.updateInsights()
-    }
-
-    initializeDataTable(table) {
-        return $(table).DataTable({
-            data: this.analytics.processedData.papers,
-            columns: [
-                {
-                    data: 'title',
-                    render: (data, type, row) => {
-                        return row.url ? `<a href="${row.url}" target="_blank" rel="noopener">${data}</a>` : data
-                    }
-                },
-                {
-                    data: 'authors',
-                    render: (data) => (Array.isArray(data) ? data.join(', ') : data)
-                },
-                { data: 'year' },
-                { data: 'venue' },
-                {
-                    data: 'citations',
-                    render: (data) => data.toLocaleString()
-                }
-            ],
-            order: [[4, 'desc']],
-            pageLength: 25,
-            responsive: true,
-            language: {
-                search: 'Filter papers:',
-                lengthMenu: 'Show _MENU_ papers per page',
-                info: 'Showing _START_ to _END_ of _TOTAL_ papers'
-            },
-            initComplete: function () {
-                // Add custom filters
-                this.api()
-                    .columns()
-                    .every(function () {
-                        const column = this
-                        if (column.header().textContent === 'Year' || column.header().textContent === 'Venue') {
-                            const select = $('<select><option value="">All</option></select>')
-                                .appendTo($(column.header()))
-                                .on('change', function () {
-                                    const val = $.fn.dataTable.util.escapeRegex($(this).val())
-                                    column.search(val ? `^${val}$` : '', true, false).draw()
-                                })
-
-                            column
-                                .data()
-                                .unique()
-                                .sort()
-                                .each(function (d) {
-                                    select.append(`<option value="${d}">${d}</option>`)
-                                })
-                        }
-                    })
-            }
-        })
-    }
-
-    updateInsights() {
-        // Update author insights
-        const authorInsights = document.getElementById('authorInsights')
-        const topAuthors = this.analytics.metrics.topAuthors
-        authorInsights.innerHTML = this.generateInsightsHTML('authors', topAuthors)
-
-        // Update topic insights
-        const topicInsights = document.getElementById('topicInsights')
-        const researchTopics = this.analytics.processedData.topics
-        topicInsights.innerHTML = this.generateInsightsHTML('topics', researchTopics)
-
-        // Update citation insights
-        const citationInsights = document.getElementById('citationInsights')
-        const citationPatterns = this.analytics.processedData.citations
-        citationInsights.innerHTML = this.generateCitationInsightsHTML(citationPatterns)
-    }
-
-    generateInsightsHTML(type, data) {
-        const insightsList = Object.entries(data)
-            .sort(([, a], [, b]) => b - a)
-            .slice(0, 10)
-            .map(
-                ([key, value]) => `
-                <div class="insight-item">
-                    <span class="insight-label">${key}</span>
-                    <span class="insight-value">${value}</span>
-                </div>
-            `
-            )
-            .join('')
-
-        return `
-            <div class="insights-list">
-                ${insightsList}
-            </div>
-        `
-    }
-
-    generateCitationInsightsHTML(citationData) {
-        return `
-            <div class="citation-insights">
-                <div class="insight-item">
-                    <span class="insight-label">Median Citations</span>
-                    <span class="insight-value">${citationData.median.toFixed(1)}</span>
-                </div>
-                <div class="insight-item">
-                    <span class="insight-label">Most Cited Paper</span>
-                    <span class="insight-value">${citationData.max} citations</span>
-                </div>
-                <div class="insight-item">
-                    <span class="insight-label">h-index</span>
-                    <span class="insight-value">${citationData.hIndex}</span>
-                </div>
-            </div>
-        `
-    }
-
-    switchTab(tabId) {
-        // Update active tab
-        document.querySelectorAll('.tab-button').forEach((button) => {
-            button.classList.toggle('active', button.dataset.tab === tabId)
-        })
-
-        document.querySelectorAll('.tab-panel').forEach((panel) => {
-            panel.classList.toggle('active', panel.id === tabId)
-        })
-
-        // Trigger resize for charts if switching to trends tab
-        if (tabId === 'trends') {
-            this.charts.forEach((chart) => chart.resize())
-        }
-
-        this.state.activeTab = tabId
-    }
-
-    toggleTheme() {
-        const newTheme = this.state.theme === 'light' ? 'dark' : 'light'
-        document.body.classList.toggle('theme-dark')
-        this.state.theme = newTheme
-
-        // Update charts theme
-        chartConfig.utils.updateTheme(this.charts, newTheme)
-
-        // Save preference
-        localStorage.setItem('theme', newTheme)
-    }
-
-    exportData() {
-        const format = window.prompt('Choose export format (csv/bibtex):', 'csv')
-        if (!format) return
-
-        switch (format.toLowerCase()) {
-            case 'csv':
-                this.analytics.exportToCSV()
-                break
-            case 'bibtex':
-                this.analytics.exportToBibTeX()
-                break
-            default:
-                alert('Unsupported format. Please choose CSV or BibTeX.')
-        }
-    }
-
-    toggleLoading(show) {
-        document.body.classList.toggle('loading', show)
-        this.state.isLoading = show
-    }
-
-    handleError(error) {
-        // Remove loading state
-        this.toggleLoading(false)
-
-        // Show error message
-        const errorContainer = document.createElement('div')
-        errorContainer.classList.add('error-message')
-        errorContainer.innerHTML = `
-            <h2>Error Loading Data</h2>
-            <p>There was a problem loading the analysis data. Please try refreshing the page.</p>
-            <p class="error-details">${error.message}</p>
-        `
-
-        document.querySelector('.container').prepend(errorContainer)
-    }
-
-    handleResize() {
-        if (this.state.activeTab === 'trends') {
-            this.charts.forEach((chart) => chart.resize())
-        }
+    // Activate first tab by default
+    if (tabs.length > 0) {
+        tabs[0].click()
     }
 }
 
-// Initialize application
+// Theme Management
+function initTheme() {
+    const themeToggle = document.getElementById('themeToggle')
+    if (!themeToggle) return
+
+    themeToggle.addEventListener('click', () => {
+        const html = document.documentElement
+        const currentTheme = html.getAttribute('data-theme') || 'light'
+        const newTheme = currentTheme === 'light' ? 'dark' : 'light'
+
+        html.setAttribute('data-theme', newTheme)
+        localStorage.setItem('theme', newTheme)
+
+        // Update theme stylesheet
+        const themeStylesheet = document.getElementById('theme-stylesheet')
+        if (themeStylesheet) {
+            themeStylesheet.href = `/static/themes/${newTheme}.css`
+        }
+    })
+}
+
+// Export Functionality
+function initExport() {
+    document.querySelectorAll('[data-export]').forEach((button) => {
+        button.addEventListener('click', async () => {
+            const format = button.getAttribute('data-export')
+            try {
+                const response = await fetch(`/api/export/${format}`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        /* Add any necessary data */
+                    })
+                })
+
+                if (response.ok) {
+                    const blob = await response.blob()
+                    const url = window.URL.createObjectURL(blob)
+                    const a = document.createElement('a')
+                    a.href = url
+                    a.download = `scholar-analysis.${format}`
+                    document.body.appendChild(a)
+                    a.click()
+                    window.URL.revokeObjectURL(url)
+                    a.remove()
+                } else {
+                    console.error('Export failed:', await response.text())
+                }
+            } catch (error) {
+                console.error('Export error:', error)
+            }
+        })
+    })
+}
+
+// Filter Management
+function initFilters() {
+    const applyFilters = document.getElementById('applyFilters')
+    if (!applyFilters) return
+
+    applyFilters.addEventListener('click', async () => {
+        const yearStart = document.getElementById('yearStart').value
+        const citationMin = document.getElementById('citationMin').value
+        const venue = document.getElementById('venueFilter').value
+
+        try {
+            const response = await fetch('/api/analyze', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    filters: {
+                        yearStart,
+                        citationMin,
+                        venue
+                    }
+                })
+            })
+
+            if (response.ok) {
+                const data = await response.json()
+                updateResults(data)
+            } else {
+                console.error('Filter application failed:', await response.text())
+            }
+        } catch (error) {
+            console.error('Filter error:', error)
+        }
+    })
+}
+
+// Results Update
+function updateResults(data) {
+    // Update papers list
+    const papersList = document.querySelector('.papers-list')
+    if (papersList && data.papers) {
+        papersList.innerHTML = data.papers
+            .map(
+                (paper) => `
+            <div class="paper-item">
+                <h3 class="paper-title">${paper.title}</h3>
+                <p class="paper-authors">${paper.authors.join(', ')}</p>
+                <p class="paper-year">${paper.year}</p>
+                <p class="paper-venue">${paper.venue}</p>
+                <p class="paper-citations">Citations: ${paper.citations}</p>
+            </div>
+        `
+            )
+            .join('')
+    }
+
+    // Update metrics
+    const metricsGrid = document.querySelector('.metrics-grid')
+    if (metricsGrid && data.metrics) {
+        metricsGrid.innerHTML = `
+            <div class="metric">
+                <h4>Total Papers</h4>
+                <p>${data.metrics.total_papers}</p>
+            </div>
+            <div class="metric">
+                <h4>Total Citations</h4>
+                <p>${data.metrics.total_citations}</p>
+            </div>
+            <div class="metric">
+                <h4>Average Citations</h4>
+                <p>${(data.metrics.total_citations / data.metrics.total_papers).toFixed(2)}</p>
+            </div>
+        `
+    }
+}
+
+// Initialize everything when DOM is ready
 document.addEventListener('DOMContentLoaded', () => {
-    const app = new ScholarApp()
-    app.initialize()
+    initTabs()
+    initTheme()
+    initExport()
+    initFilters()
 })

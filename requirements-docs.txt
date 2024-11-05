@@ -1,0 +1,19 @@
+# Sphinx documentation
+Sphinx>=4.3.0
+sphinx-rtd-theme>=1.0.0
+sphinx-autodoc-typehints>=1.12.0
+sphinx-click>=3.0.0
+sphinx-copybutton>=0.4.0
+sphinx-tabs>=3.2.0
+sphinx-prompt>=1.5.0
+sphinxcontrib-napoleon>=0.7
+sphinxcontrib-programoutput>=0.17
+sphinxcontrib-websupport>=1.2.4
+
+# Markdown support
+myst-parser>=0.15.0
+m2r2>=0.3.2
+
+# Documentation utilities
+doc8>=0.11.1
+rstcheck>=3.3.1
